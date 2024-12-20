@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Razorpay Payment</title>
+</head>
+<body>
+
+  <h1>Test Razorpay Payment</h1>
+  <button id="payButton">Pay with Razorpay</button>
+
+  <div id="paymentStatus" style="display: none;"></div>
+
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <script>
+    document.getElementById('payButton').onclick = function(e) {
+      // Call backend to create Razorpay order
+      fetch("http://localhost:5000/api/shop/order/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          userId: "123",  // Replace with actual user ID
+          cartItems: [
+            {
+              productId: "1",
+              title: "Product 1",
+              price: 1,
+              quantity: 1
+            }
+          ],
+          addressInfo: { /* Address details */ },
+          orderStatus: "pending",
+          paymentMethod: "razorpay",
+          paymentStatus: "pending",
+          totalAmount: 1,
+          orderDate: new Date(),
+          orderUpdateDate: new Date(),
+          paymentId: "razorpayPaymentId",
+          payerId: "payer123",
+          cartId: "cart123"  // Replace with actual cart ID
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          const options = {
+            key: data.razorpayKeyId,  // Razorpay Key ID
+            amount: data.totalAmount * 100,  // Amount in paise (1 INR = 100 paise)
+            currency: "INR",
+            name: "Your Company Name",
+            description: "Payment for order",
+            order_id: data.razorpayOrderId,  // Razorpay Order ID
+            handler: function (response) {
+              // Send payment details to backend for verification and status update
+              fetch("http://localhost:5000/api/shop/order/capture", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                  paymentId: response.razorpay_payment_id,
+                  payerId: response.razorpay_payer_id,
+                  orderId: data.orderId  // Order ID from backend
+                })
+              })
+              .then(response => response.json())
+              .then(data => {
+                // Handle the backend response
+                if (data.success) {
+                  document.getElementById("paymentStatus").innerText = "Payment successful! Order confirmed.";
+                  document.getElementById("paymentStatus").style.color = "green";
+                } else {
+                  document.getElementById("paymentStatus").innerText = "Payment failed! Please try again.";
+                  document.getElementById("paymentStatus").style.color = "red";
+                }
+                document.getElementById("paymentStatus").style.display = "block";
+              })
+              .catch(error => {
+                console.error("Error:", error);
+                document.getElementById("paymentStatus").innerText = "Payment failed! Please try again.";
+                document.getElementById("paymentStatus").style.color = "red";
+                document.getElementById("paymentStatus").style.display = "block";
+              });
+            },
+            prefill: {
+              name: "John Doe",
+              email: "john.doe@example.com",
+              contact: "1234567890"
+            },
+            notes: {
+              address: "Corporate Office"
+            },
+            theme: {
+              color: "#F37254"
+            }
+          };
+
+          const rzp1 = new Razorpay(options);
+          rzp1.open();
+        } else {
+          alert("Error creating Razorpay order");
+        }
+      })
+      .catch(error => {
+        console.error("Error:", error);
+        alert("Error calling the backend to create the Razorpay order.");
+      });
+    };
+  </script>
+
+</body>
+</html>
