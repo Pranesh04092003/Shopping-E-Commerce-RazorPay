@@ -29,7 +29,7 @@ mongoose
 // CORS Configuration
 const allowedOrigins = [
   "https://shoppig-client.vercel.app", // Production frontend URL
-  "http://localhost:5173"             // Local development URL (if you want to test locally)
+  "http://localhost:3000"             // Local development URL (if you want to test locally)
 ];
 
 app.use(
