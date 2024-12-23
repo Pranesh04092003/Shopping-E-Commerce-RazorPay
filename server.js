@@ -26,21 +26,10 @@ mongoose
   .then(() => console.log("MongoDB connected"))
   .catch((error) => console.log(error));
 
-// CORS Configuration
-const allowedOrigins = [
-  "https://shoppig-client.vercel.app", // Production frontend URL
-  "http://localhost:5173"             // Local development URL (if you want to test locally)
-];
-
+// CORS Configuration (Allow all origins)
 app.use(
   cors({
-    origin: function (origin, callback) {
-      // Allow the requests without an origin (like mobile apps, Postman)
-      if (!origin || allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-      return callback(new Error("Not allowed by CORS"));
-    },
+    origin: "*", // Allow requests from any origin
     methods: ["GET", "POST", "DELETE", "PUT"],
     allowedHeaders: [
       "Content-Type",
